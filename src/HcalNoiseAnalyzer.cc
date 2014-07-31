@@ -246,7 +246,6 @@ private:
    bool correctForTimeslew;
    bool correctForPhaseContainment;
    double correctionPhaseNS;
-   HcalSimpleRecAlgo reco_;
    HcalRecoParams* paramTS;  // firstSample & samplesToAdd from DB  
 
    void ClearVariables();
@@ -260,7 +259,7 @@ private:
 //---------------------------------------------------------------------------
 HcalNoiseAnalyzer::HcalNoiseAnalyzer(const edm::ParameterSet& iConfig) :
    correctForTimeslew(true), correctForPhaseContainment(true),
-   correctionPhaseNS(6.0), reco_(correctForTimeslew, correctForPhaseContainment,correctionPhaseNS)
+   correctionPhaseNS(6.0)
 {
    // Get stuff and initialize here
    FillHBHE = iConfig.getUntrackedParameter<bool>("FillHBHE", true);
@@ -295,13 +294,13 @@ void HcalNoiseAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
    iEvent.getByLabel(InputTag("horeco"), hHORecHits);
 
    Handle<HBHEDigiCollection> hHBHEDigis;
-   iEvent.getByType(hHBHEDigis);
+   iEvent.getByLabel(InputTag("hcalDigis"), hHBHEDigis);
 
    Handle<HFDigiCollection> hHFDigis;
-   iEvent.getByType(hHFDigis);
+   iEvent.getByLabel(InputTag("hcalDigis"), hHFDigis);
 
    Handle<HODigiCollection> hHODigis;
-   iEvent.getByType(hHODigis);
+   iEvent.getByLabel(InputTag("hcalDigis"), hHODigis);
 
    Handle<EcalRecHitCollection> hEBRecHits;
    iEvent.getByLabel(InputTag("ecalRecHit", "EcalRecHitsEB"), hEBRecHits);
@@ -338,7 +337,7 @@ void HcalNoiseAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
    iEvent.getByLabel("muonsFromCosmics", hCosmicMuon);
 
    Handle<HcalNoiseSummary> hSummary;
-   iEvent.getByType(hSummary);
+   iEvent.getByLabel("hcalnoise", hSummary);
 
    Handle<CaloJetCollection> hCaloJets;
    iEvent.getByLabel("ak5CaloJets", hCaloJets);
@@ -452,7 +451,7 @@ void HcalNoiseAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
       // First let's convert ADC to deposited charge
       const HcalCalibrations &Calibrations = hConditions->getHcalCalibrations(id);
       const HcalQIECoder *ChannelCoder = hConditions->getHcalCoder(id);
-      const HcalQIEShape *Shape = hConditions->getHcalShape();
+      const HcalQIEShape *Shape = hConditions->getHcalShape(ChannelCoder);
       HcalCoderDb Coder(*ChannelCoder, *Shape);
       CaloSamples Tool;
       Coder.adc2fC(*iter, Tool);
@@ -547,7 +546,7 @@ void HcalNoiseAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
       // ADC -> fC
       const HcalCalibrations &Calibrations = hConditions->getHcalCalibrations(id);
       const HcalQIECoder *ChannelCoder = hConditions->getHcalCoder(id);
-      const HcalQIEShape *Shape = hConditions->getHcalShape();
+      const HcalQIEShape *Shape = hConditions->getHcalShape(ChannelCoder);
       HcalCoderDb Coder(*ChannelCoder, *Shape);
       CaloSamples Tool;
       Coder.adc2fC(*iter, Tool);
@@ -580,7 +579,7 @@ void HcalNoiseAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
       // ADC -> fC
       const HcalCalibrations &Calibrations = hConditions->getHcalCalibrations(id);
       const HcalQIECoder *ChannelCoder = hConditions->getHcalCoder(id);
-      const HcalQIEShape *Shape = hConditions->getHcalShape();
+      const HcalQIEShape *Shape = hConditions->getHcalShape(ChannelCoder);
       HcalCoderDb Coder(*ChannelCoder, *Shape);
       CaloSamples Tool;
       Coder.adc2fC(*iter, Tool);
@@ -857,17 +856,12 @@ void HcalNoiseAnalyzer::beginRun(const edm::Run & r, const edm::EventSetup & es)
    // -----------------------------------------------------------------
 
    pulseCorr_->beginRun(es); // to initialize HcalPulseShapes
-   reco_.beginRun(es);
-
-   reco_.setForData();
-   reco_.setLeakCorrection();
 }
 
 //------------------------------------------------------------------------------
 void HcalNoiseAnalyzer::endRun(const edm::Run &r, const edm::EventSetup &es)
 {
    if (paramTS) delete paramTS;
-   reco_.endRun();
 }
 //------------------------------------------------------------------------------
 void HcalNoiseAnalyzer::ClearVariables()
