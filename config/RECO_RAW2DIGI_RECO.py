@@ -1,7 +1,7 @@
 # Auto generated configuration file
 # using:
-# Revision: 1.381.2.13
-# Source: /local/reps/CMSSW/CMSSW/Configuration/PyReleaseValidation/python/ConfigBuilder.py,v
+# Revision: 1.19
+# Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v
 # with command line options: RECO --data -s RAW2DIGI,RECO --filein file:5C1B1DE5-9B38-E211-A048-001D09F24FBA.root --fileout DummyOutput.root --conditions FT_R_53_V18::All --no_exec
 import FWCore.ParameterSet.Config as cms
 
@@ -35,29 +35,29 @@ process.options = cms.untracked.PSet(
 
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
-    version = cms.untracked.string('$Revision: 1.1 $'),
+    version = cms.untracked.string('$Revision: 1.19 $'),
     annotation = cms.untracked.string('RECO nevts:1'),
-    name = cms.untracked.string('PyReleaseValidation')
+    name = cms.untracked.string('Applications')
 )
 
 # Output definition
 
 # process.RECOSIMoutput = cms.OutputModule("PoolOutputModule",
-#    splitLevel = cms.untracked.int32(0),
-#    eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
-#    outputCommands = process.RECOSIMEventContent.outputCommands,
-#    fileName = cms.untracked.string('DummyOutput.root'),
-#    dataset = cms.untracked.PSet(
-#        filterName = cms.untracked.string(''),
-#        dataTier = cms.untracked.string('')
-#    )
+#     splitLevel = cms.untracked.int32(0),
+#     eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
+#     outputCommands = process.RECOSIMEventContent.outputCommands,
+#     fileName = cms.untracked.string('DummyOutput.root'),
+#     dataset = cms.untracked.PSet(
+#         filterName = cms.untracked.string(''),
+#         dataTier = cms.untracked.string('')
+#     )
 # )
 
 # Additional output definition
 
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, 'FT_P_V42D::All', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, 'GR_R_72_V1::All', '')
 
 # Hcal noise analyzers
 process.HBHENoiseFilterResultProducer = cms.EDProducer(
@@ -75,7 +75,9 @@ process.HBHENoiseFilterResultProducer = cms.EDProducer(
    minNumIsolatedNoiseChannels = cms.int32(10),
    minIsolatedNoiseSumE = cms.double(50.0),
    minIsolatedNoiseSumEt = cms.double(25.0),
-   useTS4TS5 = cms.bool(True),
+   useTS4TS5 = cms.bool(False),
+   useRBXRechitR45Loose = cms.bool(False),
+   useRBXRechitR45Tight = cms.bool(False),
    IgnoreTS4TS5ifJetInLowBVRegion = cms.bool(True),
    jetlabel = cms.InputTag('ak5PFJets'),
    maxjetindex = cms.int32(0),

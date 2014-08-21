@@ -59,8 +59,6 @@ using namespace std;
 #include "DataFormats/METReco/interface/HcalNoiseRBX.h"
 #include "RecoMET/METAlgorithms/interface/HcalHPDRBXMap.h"
 
-#include "RecoMET/METAlgorithms/interface/HcalHPDRBXMap.h"
-
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "FWCore/Common/interface/TriggerNames.h"
 
@@ -78,6 +76,7 @@ using namespace std;
 
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
+#include "Geometry/CaloTopology/interface/HcalTopology.h"
 
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonFwd.h"
@@ -210,6 +209,9 @@ private:
    int MaxZeros;
    double MinE2E10;
    double MaxE2E10;
+   bool HasBadRBXR45;
+   bool HasBadRBXRechitR45Loose;
+   bool HasBadRBXRechitR45Tight;
 
    // Official decision from the baseline hcal noise filter
    bool OfficialDecision;
@@ -246,7 +248,8 @@ private:
    bool correctForTimeslew;
    bool correctForPhaseContainment;
    double correctionPhaseNS;
-   HcalRecoParams* paramTS;  // firstSample & samplesToAdd from DB  
+   HcalRecoParams *paramTS;  // firstSample & samplesToAdd from DB  
+   HcalTopology *theTopology;
 
    void ClearVariables();
    void CalculateTotalEnergiesHBHE(const HBHERecHitCollection &RecHits);
@@ -309,7 +312,7 @@ void HcalNoiseAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
    iEvent.getByLabel(InputTag("ecalRecHit", "EcalRecHitsEE"), hEERecHits);
 
    Handle<CaloMETCollection> hCaloMET;
-   iEvent.getByLabel(InputTag("met"), hCaloMET);
+   iEvent.getByLabel(InputTag("caloMet"), hCaloMET);
 
    ESHandle<HcalDbService> hConditions;
    iSetup.get<HcalDbRecord>().get(hConditions);
@@ -610,6 +613,9 @@ void HcalNoiseAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
    MaxZeros = hSummary->maxZeros();
    MinE2E10 = hSummary->minE2Over10TS();
    MaxE2E10 = hSummary->maxE2Over10TS();
+   HasBadRBXR45 = hSummary->HasBadRBXTS4TS5();
+   HasBadRBXRechitR45Loose = hSummary->HasBadRBXRechitR45Loose();
+   HasBadRBXRechitR45Tight = hSummary->HasBadRBXRechitR45Tight();
 
    // jets
    int JetCollectionCount = hCaloJets->size();
@@ -807,6 +813,9 @@ void HcalNoiseAnalyzer::beginJob()
    OutputTree->Branch("MaxZeros", &MaxZeros, "MaxZeros/I");
    OutputTree->Branch("MinE2E10", &MinE2E10, "MinE2E10/D");
    OutputTree->Branch("MaxE2E10", &MaxE2E10, "MaxE2E10/D");
+   OutputTree->Branch("HasBadRBXR45", &HasBadRBXR45, "HasBadRBXR45/O");
+   OutputTree->Branch("HasBadRBXRechitR45Loose", &HasBadRBXRechitR45Loose, "HasBadRBXRechitR45Loose/O");
+   OutputTree->Branch("HasBadRBXRechitR45Tight", &HasBadRBXRechitR45Tight, "HasBadRBXRechitR45Tight/O");
 
    OutputTree->Branch("LeadingJetEta", &LeadingJetEta, "LeadingJetEta/D");
    OutputTree->Branch("LeadingJetPhi", &LeadingJetPhi, "LeadingJetPhi/D");
@@ -849,6 +858,11 @@ void HcalNoiseAnalyzer::beginRun(const edm::Run & r, const edm::EventSetup & es)
    es.get<HcalRecoParamsRcd>().get(p);
    paramTS = new HcalRecoParams(*p.product());
 
+   edm::ESHandle<HcalTopology> htopo;
+   es.get<IdealGeometryRecord>().get(htopo);
+   theTopology=new HcalTopology(*htopo);
+   paramTS->setTopo(theTopology);
+   
    // --------------- dump of ResoParams DB ---------------------------
    //std::cout << " skdump in HcalHitReconstructor::beginRun   dupm RecoParams " << std::endl;
    //std::ofstream skfile("skdumpRecoParamsNewFormat.txt");
@@ -976,6 +990,9 @@ void HcalNoiseAnalyzer::ClearVariables()
    MaxZeros = 0;
    MinE2E10 = 0;
    MaxE2E10 = 0;
+   HasBadRBXR45 = false;
+   HasBadRBXRechitR45Loose = false;
+   HasBadRBXRechitR45Tight = false;
 
    LeadingJetEta = 0;
    LeadingJetPhi = 0;
